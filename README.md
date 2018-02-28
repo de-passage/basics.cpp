@@ -56,8 +56,8 @@ Sort: Here, heapsort is used
 A balanced binary tree is a special kind of tree where each node contains exactly two children and the depth of any given branch is about the same (in this case the difference is never bigger than 2). These structures can be implemented to be sorted by default which garantees than subsequent search operations will perform at most in O(log(N)). There are a lot of different possible implementations for balanced binary search trees, the one presented here is an AVL tree, which stores in each node the unbalance between its left and right branch and rebalances itself as needed on insertions and deletions. Although theoretically operarating with the complexity indicated below, in practice the constant rebalancing of the tree can make it slower than other possible implementations when a lot of insertions/deletions are performed.
 
 ### Algorithmic complexity: 
-Insertion: O(log(N))
-Deletion: O(log(N))
+Insertion: O(log(N))  
+Deletion: O(log(N))  
 Access: O(log(N)), access and search are the same operation  
 Search: O(log(N)), access and search are the same operation  
 Sort: N/A, already sorted
