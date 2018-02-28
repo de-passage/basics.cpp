@@ -10,7 +10,7 @@ An array of fixed size determined at compilation. Equivalent of std::array.
 Insertion: N/A  
 Deletion: N/A  
 Access: O(1)  
-Search: O(N)  
+Search: O(N) if the array is unsorted  
 Sort: The sort algorithm chosen for this data structure is insertion sort  
 &ensp;&ensp;&ensp;Time: O(N) in best case, O(N^2) in average, O(N^2) in worst case  
 &ensp;&ensp;&ensp;Space: O(1) auxiliary  
@@ -23,7 +23,7 @@ The specificity of an array over a list is the access in constant time of random
 Insertion: O(1) at the end, O(N) at random index  
 Deletion: O(1) at the end, O(N) at random index  
 Access: O(1)  
-Search: O(N)  
+Search: O(N) if the array is unsorted  
 Sort: The sort algorithm here is quicksort  
 &ensp;&ensp;&ensp;Time: O(N*log(N)) in average, O(N^2) in worst case  
 &ensp;&ensp;&ensp;Space: O(log(N)) auxiliary  
@@ -34,7 +34,7 @@ The singled linked list is a straightforward data structure: a value and a point
 ### Algorithmic complexity: 
 Insertion: O(1) with appropriate pointer  
 Deletion: O(1) with appropriate pointer  
-Access: O(N)  
+Access: O(N) at random index, O(1) at beginning  
 Search: O(N)  
 Sort: Bubble sort is used here.  
 &ensp;&ensp;&ensp;Time: O(N) in best case, O(N^2) in average, O(N^2) in worst case  
@@ -46,11 +46,30 @@ The double linked list is similar to the single linked list, with the only diffe
 ### Algorithmic complexity: 
 Insertion: O(1) with appropriate pointer  
 Deletion: O(1) with appropriate pointer  
-Access: O(N)  
+Access: O(N) at random index, O(1) at beginning or end  
 Search: O(N)  
 Sort: Here, heapsort is used  
 &ensp;&ensp;&ensp;Time: O(N*log(N)) in average, O(N^2) in worst case  
 &ensp;&ensp;&ensp;Space: O(N) auxiliary  
 
+## Balanced Binary Tree
+A balanced binary tree is a special kind of tree where each node contains exactly two children and the depth of any given branch is about the same (in this case the difference is never bigger than 2). These structures can be implemented to be sorted by default which garantees than subsequent search operations will perform at most in O(log(N)). There are a lot of different possible implementations for balanced binary search trees, the one presented here is an AVL tree, which stores in each node the unbalance between its left and right branch and rebalances itself as needed on insertions and deletions. Although theoretically operarating with the complexity indicated below, in practice the constant rebalancing of the tree can make it slower than other possible implementations when a lot of insertions/deletions are performed.
+
+### Algorithmic complexity: 
+Insertion: O(log(N))
+Deletion: O(log(N))
+Access: O(log(N)), access and search are the same operation  
+Search: O(log(N)), access and search are the same operation  
+Sort: N/A, already sorted
+
+## Hash table
+The hash table, also called dictionary, is a structure in which elements are stored according to a hash function, a function transforming its input in an unsigned integer. The collected hash is then constrained to a range corresponding to an address block in memory and the element is then stored at the appropriate address. A hash function is typically required to operate in constant time, and the underlying array allowing random access in constant time to its elements, a hash table theoretically performs most operations in constant time. However in practice it can be difficult to provide constant time hash functions and an array of appropriate size to significantly avoid collisions (instances where two different elements share the same hash). In this case we deal with such collisions simply by storing the various possibilities in a linked list, which is likely to degrade performances.
+
+### Algorithmic complexity: 
+Insertion: O(1) amortized in average, O(N) in worst case  
+Deletion: O(1) amortized in average, O(N) in worst case  
+Access: O(1) amortized in average, O(N) in worst case, access and search are the same operation  
+Search: O(1) amortized in average, O(N) in worst case, access and search are the same operation  
+Sort: N/A, sorting a hash table means converting it to a different data structure
 
 No optimization effort has been made and the present classes can in no way be considered production ready.
