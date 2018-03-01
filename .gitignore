@@ -37,3 +37,5 @@ src/
 *.out
 *.app
 >>>>>>> 5049a29056c8c467cd97ab852b7a68fb1cd6e8d7
+.*
+bin
