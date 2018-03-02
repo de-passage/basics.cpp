@@ -3,10 +3,12 @@
 
 #include <utility>
 #include <initializer_list>
+#include "details/balanced_binary_tree_node.hpp"
 
 namespace dpsg {
 	template<class Type>
 		class BalancedBinaryTree {
+			typedef details::BalancedBinaryTreeNode<Type> Node;
 			public:
 				constexpr BalancedBinaryTree();
 				constexpr BalancedBinaryTree(const std::initializer_list<Type>&);
@@ -15,13 +17,7 @@ namespace dpsg {
 				void insert(const Type&);
 
 			private:
-				struct Node {
-					Type value;
-					Node *lhv;
-					Node *rhv;
-					std::size_t height_difference;
-					constexpr Node(const Type&);
-				} *_root;
+				Node* _root;
 				std::size_t _size;
 
 				static void _delete_branch(Node*);
@@ -73,8 +69,5 @@ namespace dpsg {
 			_delete_branch(node->rhv);
 			delete node;
 		}
-
-	template<class Type>
-		constexpr BalancedBinaryTree<Type>::Node::Node(const Type& value) : value(value), lhv(nullptr), rhv(nullptr), height_difference(0) {}
 }
 #endif // GUARD_BALANCED_BINARY_TREE_HPP__

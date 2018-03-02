@@ -5,61 +5,25 @@
 #include <string>
 #include <stdexcept>
 #include "single_linked_list.hpp"
-
-namespace details {
-	// Is true_type if T is the same type as one of the types in the Args list
-	template<class T, class...Args> struct is_one_of;
-	template<class T, class ...Args> struct is_one_of<T, T, Args...> : std::true_type {};
-	template<class T, class U, class ...Args> struct is_one_of<T, U, Args...> : is_one_of<T, Args...> {};
-	template<class T> struct is_one_of<T> : std::false_type {};
-
-	template<class T> struct decay { typedef T value; };
-	template<class T> struct decay<const T*> { typedef T value; };
-	template<class T> struct decay<T*> { typedef T value; };
-	template<class T>
-		using decay_t = typename decay<T>::value;
-}
-
-template<class T, class = void>
-struct hash;
-
-template<class T>
-struct hash<T, std::enable_if_t<std::is_integral<T>::value>> {
-	std::size_t operator()(const T& t) { return t; }
-};
-
-template<class T>
-struct hash<T, std::enable_if_t<details::is_one_of<details::decay_t<std::decay_t<T>>, char, wchar_t>::value>> {
-	std::size_t operator()(const T p) {
-		return hash<std::basic_string<details::decay_t<T>>>()(std::basic_string<details::decay_t<T>>(p));
-	}
-};
-
-template<class T>
-struct hash<T, std::enable_if_t<details::is_one_of<std::decay_t<T>, std::string, std::wstring>::value>> {
-	std::size_t operator()(const T& t) { 
-		// djb2 by Dan Berstein
-		std::size_t hash = 5381;
-
-		for(auto c = t.begin(); c != t.end(); ++c)
-			hash = ((hash << 5) + hash) + *c;
-
-		return hash;
-	}
-};
+#include "details/hash.hpp"
 
 template<class Type, class HashFunctor = hash<Type>>
 struct HashTable {
+	// Constructs an empty hash table
 	HashTable();
+	// Constructs a hash table initialized with the list of parameters
 	HashTable(const std::initializer_list<Type>&);
+
 	~HashTable();
 
+	// Insert a new value into the table
 	void insert(const Type&);
+
+	// Remove the given value from the table
 	void erase(const Type&);
-	template<typename Functor>
-		Type find(Functor) const;
-	template<typename Functor>
-		Type& find(Functor);
+
+	// Return the value matching the argument.
+	// Throw a std::runtime_error if the value is not in the table
 	Type operator[](const Type&) const;
 	Type& operator[](const Type&);
 
@@ -71,6 +35,34 @@ struct HashTable {
 	SingleLinkedList<Type>& _store_for(const Type&);
 	const SingleLinkedList<Type>& _store_for(const Type&)const;
 
+	public:
+	// Structure that may contain a value or not
+	template<class T>
+		struct Maybe {
+			constexpr Maybe(T* = nullptr);
+			template<class U>
+				constexpr Maybe(const Maybe<U>&);
+
+			// Return the contained value if it exists. Throw otherwise
+			const T& operator*() const;
+			const T* operator->() const;
+			T& operator*();
+			T* operator->();
+
+			// Evaluate to true a value is contained, false otherwise
+			operator bool() const;
+			private:
+			friend Maybe<std::add_const_t<T>>;
+			T* _pointer;
+		};
+
+	// Returns a dereferenceable structure that may contain the searched value
+	// Implicitely convertible to bool with true value if the searched value is contained, false value if the value is not contained
+	Maybe<const Type> find(const Type&) const;
+	Maybe<Type> find(const Type&);
+
+	// Return true if the value is in the table, false otherwise
+	bool contains(const Type&) const;
 };
 
 template<class T, class H>
@@ -81,20 +73,26 @@ HashTable<T, H>::HashTable(const std::initializer_list<T>& list) : _size(list.si
 
 template<class T, class H>
 void HashTable<T, H>::insert(const T& val) {
+	//Hash the value then find the associated address
 	std::size_t h = H()(val);
 	std::size_t pos = h % _capacity;
 	SingleLinkedList<T>& store = _storage[pos];
 
+	// Throw if the value is already in the table
 	for(auto it = store.begin(); it != store.end(); ++it)
 		if(*it == val)
 			throw std::runtime_error("HashTable insertion error: an element with the same value exists already");
 	_size++;
 
+	// Resize and adjust the position if needed
+	// note that the comparison is completely arbitrary, benchmarking would be required to determine the optimal
+	// point at which the array needs resizing
 	if(_size >= _capacity) {
 		_resize();
 		pos = h % _capacity;
 	}
 
+	// Push in the list at the right position, done
 	_storage[pos].push_front(val);
 }
 
@@ -108,13 +106,15 @@ void HashTable<T, H>::erase(const T& val) {
 }
 
 template<class T, class H>
-template<typename Functor>
-T HashTable<T, H>::find(Functor) const {
+HashTable<T, H>::Maybe<const T> HashTable<T, H>::find(const T& value) const {
+	return const_cast<HashTable<T, H>*>(this)->find(value);
 }
 
 template<class T, class H>
-template<typename Functor>
-T& HashTable<T, H>::find(Functor) {
+HashTable<T, H>::Maybe<T> HashTable<T, H>::find(const T& value) {
+	auto& store = _store_for(value);
+	auto it = store.find(value);
+	return Maybe<T>(it == store.end() ? nullptr : &*it);
 }
 
 template<class T, class H>
@@ -123,13 +123,16 @@ T HashTable<T, H>::operator[](const T& val) const {
 }
 
 template<class T, class H>
-T& HashTable<T, H>::operator[](const T& val) {
-	auto& store = _store_for(val);
-	auto it = store.find(val);
-	if(it == store.end()) {
+T& HashTable<T, H>::operator[](const T& value) {
+	auto maybe = find(value);
+	if(!maybe)
 		throw std::out_of_range("HashTable::operator[] : the given key is not in the table");
-	}
-	return *it;
+	return *maybe;
+}
+
+template<class T, class H>
+bool HashTable<T, H>::contains(const T& value) const {
+	return find(value);
 }
 
 template<class T, class H>
@@ -139,14 +142,19 @@ HashTable<T, H>::~HashTable() {
 
 template<class T, class H>
 void HashTable<T,H>::_resize() {
+
 	std::size_t old_capacity = _capacity;
-	_capacity *= 2;
+	_capacity *= 2; // arbitrary and most likely inefficient
+
+
 	SingleLinkedList<T>* new_array = new SingleLinkedList<T>[_capacity];
+	// recalculate every position of the existing elements, then insert them in the new array
 	for(std::size_t i = 0; i < old_capacity; ++i) {
 		for(auto it = _storage[i].begin(); it != _storage[i].end(); ++it) {
 			new_array[H()(*it) % _capacity].push_front(*it);
 		}
 	}
+
 	std::swap(new_array, _storage);
 	delete[] new_array;
 }
@@ -163,4 +171,45 @@ template<class Type, class H>
 const SingleLinkedList<Type>& HashTable<Type, H>::_store_for(const Type& val) const {
 	return const_cast<HashTable<Type, H>*>(this)->_store_for(val);
 }
+
+template<class Type, class H>
+template<class T>
+constexpr HashTable<Type, H>::Maybe<T>::Maybe(T* pointer) : _pointer(pointer) {}
+
+template<class Type, class H>
+template<class T>
+template<class U>
+constexpr HashTable<Type, H>::Maybe<T>::Maybe(const Maybe<U>& mb) : _pointer(mb._pointer) {}
+
+template<class Type, class H>
+template<class T>
+const T& HashTable<Type, H>::Maybe<T>::operator*() const {
+	return const_cast<Maybe<T>*>(this)->operator*();
+}
+
+template<class Type, class H>
+template<class T>
+const T* HashTable<Type, H>::Maybe<T>::operator->() const {
+	return const_cast<Maybe<T>*>(this)->operator();
+}
+
+template<class Type, class H>
+template<class T>
+T& HashTable<Type, H>::Maybe<T>::operator*() {
+	if(!_pointer) throw std::runtime_error("HashTable::Maybe error: dereferencing null pointer");
+	return *_pointer;
+}
+
+template<class Type, class H>
+template<class T>
+T* HashTable<Type, H>::Maybe<T>::operator->() {
+	return _pointer ? _pointer : throw std::runtime_error("HashTable::Maybe error: dereferencing null pointer");
+}
+
+template<class Type, class H>
+template<class T>
+HashTable<Type, H>::Maybe<T>::operator bool() const {
+	return _pointer;
+}
+
 #endif // GUARD_HASH_TABLE_HPP__

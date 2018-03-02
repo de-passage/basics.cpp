@@ -28,34 +28,43 @@ namespace dpsg {
 
 
 			private:
-				template<class T>
-					struct Node {
-						T* value;
-						Node* next;
-						Node* previous;
+				struct Node {
+					Type value;
+					Node* next;
+					Node* previous;
+				};
+				template<class NodeType>
+					struct basic_iterator {
+						constexpr basic_iterator();
+						constexpr basic_iterator(NodeType*);
+						template<class NT>
+							constexpr basic_iterator(const basic_iterator<NT>&);
 
-						constexpr const T& operator*() const;
-						constexpr T& operator*();
+						constexpr const Type& operator*() const;
+						constexpr Type& operator*();
 
-						constexpr const T* operator->() const;
-						constexpr T* operator->();
+						constexpr const Type* operator->() const;
+						constexpr Type* operator->();
 
-						Node& operator++();
-						Node operator++(int);
-						Node& operator--();
-						Node operator--(int);
+						basic_iterator& operator++();
+						basic_iterator operator++(int);
+						basic_iterator& operator--();
+						basic_iterator operator--(int);
 
-						bool operator==(const Node&);
-						bool operator!=(const Node&);
+						constexpr bool operator==(const basic_iterator<NodeType>&) const;
+						constexpr bool operator!=(const basic_iterator<NodeType>&) const;
+
+						private:
+						NodeType* _pointer;
 
 					};
-				Node<Type>* _first;
-				Node<Type>* _last;
+				Node* _first;
+				Node* _last;
 				std::size_t _size;
 
 			public:
-				typedef Node<Type> iterator;
-				typedef Node<const Type> const_iterator;
+				typedef basic_iterator<Node> iterator;
+				typedef basic_iterator<const Node> const_iterator;
 
 				constexpr iterator begin();
 				constexpr const_iterator begin() const;
@@ -74,11 +83,10 @@ namespace dpsg {
 		}
 	template<class Type>
 		DoubleLinkedList<Type>::~DoubleLinkedList() {
-			Node<Type>* tmp;
+			Node* tmp;
 			while(_first != nullptr) {
 				tmp = _first;
 				_first = _first->next;
-				delete tmp->value;
 				delete tmp;
 			}
 		}
@@ -86,33 +94,33 @@ namespace dpsg {
 	template<class Type>
 		void DoubleLinkedList<Type>::push_front(const Type& t) {
 			if(_first == nullptr)
-				_first = _last = new Node<Type>{ new Type(t), nullptr, nullptr };
+				_first = _last = new Node{ Type(t), nullptr, nullptr };
 			else
-				_first = new Node<Type>{ new Type(t), nullptr, _first };
+				_first = new Node{ Type(t), nullptr, _first };
 		}
 
 	template<class Type>
 		void DoubleLinkedList<Type>::push_front(Type&& t) {
 			if(_first == nullptr)
-				_first = _last = new Node<Type>{ new Type(std::forward<Type>(t)), nullptr, nullptr };
+				_first = _last = new Node{ Type(std::forward<Type>(t)), nullptr, nullptr };
 			else
-				_first = new Node<Type>{ new Type(std::forward<Type>(t)), nullptr, _first };
+				_first = new Node{ Type(std::forward<Type>(t)), nullptr, _first };
 		}
 
 	template<class Type>
 		void DoubleLinkedList<Type>::push_back(const Type& t) {
 			if(_last == nullptr)
-				_last = _last = new Node<Type>{ new Type(t), nullptr, nullptr };
+				_last = _last = new Node{ Type(t), nullptr, nullptr };
 			else
-				_last = new Node<Type>{ new Type(t), _last, nullptr };
+				_last = new Node{ Type(t), _last, nullptr };
 		}
 
 	template<class Type>
 		void DoubleLinkedList<Type>::push_back(Type&& t) {
 			if(_last == nullptr)
-				_last = _last = new Node<Type>{ new Type(std::forward<Type>(t)), nullptr, nullptr };
+				_last = _last = new Node{ Type(std::forward<Type>(t)), nullptr, nullptr };
 			else
-				_last = new Node<Type>{ new Type(std::forward<Type>(t)), _last, nullptr };
+				_last = new Node{ Type(std::forward<Type>(t)), _last, nullptr };
 		}
 
 	template<class Type>
@@ -136,62 +144,76 @@ namespace dpsg {
 		constexpr std::size_t DoubleLinkedList<Type>::size() const {
 			return _size;
 		}
+
 	template<class Type>
 		template<class T>
-		constexpr const T& DoubleLinkedList<Type>::Node<T>::operator*() const {
-			return *value;
+		constexpr DoubleLinkedList<Type>::basic_iterator<T>::basic_iterator() : _pointer(nullptr) {}
+
+	template<class Type>
+		template<class T>
+		constexpr DoubleLinkedList<Type>::basic_iterator<T>::basic_iterator(T* node) : _pointer(node) {}
+
+	template<class Type>
+		template<class T>
+		template<class NT>
+		constexpr DoubleLinkedList<Type>::basic_iterator<T>::basic_iterator(const basic_iterator<NT>& it) : _pointer(it._pointer) {}
+
+	template<class Type>
+		template<class T>
+		constexpr const Type& DoubleLinkedList<Type>::basic_iterator<T>::operator*() const {
+			return *_pointer->value;
 		}
 
 	template<class Type>
 		template<class T>
-		constexpr T& DoubleLinkedList<Type>::Node<T>::operator*() {
-			return *value;
+		constexpr Type& DoubleLinkedList<Type>::basic_iterator<T>::operator*() {
+			return *_pointer->value;
 		}
 
 	template<class Type>
 		template<class T>
-		constexpr const T* DoubleLinkedList<Type>::Node<T>::operator->() const {
-			return value;
+		constexpr const Type* DoubleLinkedList<Type>::basic_iterator<T>::operator->() const {
+			return _pointer->value;
 		}
 	template<class Type>
 		template<class T>
-		constexpr T* DoubleLinkedList<Type>::Node<T>::operator->() {
-			return value;
+		constexpr Type* DoubleLinkedList<Type>::basic_iterator<T>::operator->() {
+			return _pointer->value;
 		}
 
 	template<class Type>
 		template<class T>
-		typename DoubleLinkedList<Type>::template Node<T>& DoubleLinkedList<Type>::Node<T>::operator++() {
-			return *this = *next;
+		typename DoubleLinkedList<Type>::template basic_iterator<T>& DoubleLinkedList<Type>::basic_iterator<T>::operator++() {
+			return _pointer = _pointer->next;
 		}
 	template<class Type>
 		template<class T>
-		typename DoubleLinkedList<Type>::template Node<T> DoubleLinkedList<Type>::Node<T>::operator++(int) {
-			Node<T> tmp = *this;
+		typename DoubleLinkedList<Type>::template basic_iterator<T> DoubleLinkedList<Type>::basic_iterator<T>::operator++(int) {
+			Node tmp = *this;
 			++*this;
 			return tmp;
 		}
 	template<class Type>
 		template<class T>
-		typename DoubleLinkedList<Type>::template Node<T>& DoubleLinkedList<Type>::Node<T>::operator--() {
-			return *this = *previous;
+		typename DoubleLinkedList<Type>::template basic_iterator<T>& DoubleLinkedList<Type>::basic_iterator<T>::operator--() {
+			return _pointer = _pointer->previous;
 		}
 	template<class Type>
 		template<class T>
-		typename DoubleLinkedList<Type>::template Node<T> DoubleLinkedList<Type>::Node<T>::operator--(int) {
-			Node<T> tmp = *this;
+		typename DoubleLinkedList<Type>::template basic_iterator<T> DoubleLinkedList<Type>::basic_iterator<T>::operator--(int) {
+			Node tmp = *this;
 			--*this;
 			return tmp;
 		}
 
 	template<class Type>
 		template<class T>
-		bool DoubleLinkedList<Type>::Node<T>::operator==(const Node& n) {
-			return n.value == value;
+		constexpr bool DoubleLinkedList<Type>::basic_iterator<T>::operator==(const basic_iterator<T>& n) const {
+			return n._pointer == _pointer;
 		}
 	template<class Type>
 		template<class T>
-		bool DoubleLinkedList<Type>::Node<T>::operator!=(const Node& n) {
+		constexpr bool DoubleLinkedList<Type>::basic_iterator<T>::operator!=(const basic_iterator<T>& n) const {
 			return !(n == *this);
 		}
 }
