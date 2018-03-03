@@ -11,8 +11,8 @@ Insertion: N/A
 Deletion: N/A  
 Access: O(1)  
 Search: O(N) if the array is unsorted  
-Sort: The sort algorithm chosen for this data structure is insertion sort  
-&ensp;&ensp;&ensp;Time: O(N) in best case, O(N^2) in average, O(N^2) in worst case  
+Sort: The algorithm used here is heapsort
+&ensp;&ensp;&ensp;Time: O(N*log(N)) in average, O(N^2) in worst case  
 &ensp;&ensp;&ensp;Space: O(1) auxiliary  
 
 [code](https://github.com/de-passage/basics.cpp/blob/master/include/static_array.hpp)
@@ -60,9 +60,9 @@ Insertion: O(1) with appropriate pointer
 Deletion: O(1) with appropriate pointer  
 Access: O(N) at random index, O(1) at beginning or end  
 Search: O(N)  
-Sort: Here, heapsort is used  
-&ensp;&ensp;&ensp;Time: O(N*log(N)) in average, O(N^2) in worst case  
-&ensp;&ensp;&ensp;Space: O(N) auxiliary  
+Sort: The sort algorithm chosen for this data structure is insertion sort  
+&ensp;&ensp;&ensp;Time: O(N) in best case, O(N^2) in average, O(N^2) in worst case  
+&ensp;&ensp;&ensp;Space: O(1) auxiliary  
 
 [code](https://github.com/de-passage/basics.cpp/blob/master/include/double_linked_list.hpp)
 
