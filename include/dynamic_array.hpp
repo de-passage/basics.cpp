@@ -12,23 +12,42 @@ namespace dpsg {
 			public:
 				// Constructs an empty array of size 0
 				constexpr DynamicArray();
+
 				// Create an empty array with the given size
 				constexpr DynamicArray(std::size_t);
+
+				// Create an array containing the given elements
 				constexpr DynamicArray(const std::initializer_list<Type>& list);
 				~DynamicArray();
 
+				// Add an element at the end of the array
 				void push_back(const Type&);
-				void push_back(Type&& t);
+
+				// Remove the last element in the array
 				void pop();
+
+				// Return the element at the given index
+				// If the index is out of bound, the behavior is undefined
 				constexpr const Type& operator[](std::size_t) const;
 				constexpr Type& operator[](std::size_t);
+
+				// Return the element at the given index
+				// If the index is out of bound, throw a std::out_of_range exception
 				const Type& at(std::size_t) const;
 				Type& at(std::size_t);
 
+				// Return the number of elements in the array
 				constexpr std::size_t size() const;
+
+				// Return the size of the array in memory
 				constexpr std::size_t capacity() const;
 
+				// Change the capacity of the array
 				void resize(std::size_t);
+
+				// Sort the elements in the array according to the comparison function given in argument (quicksort)
+				template<class Function>
+					void sort(const Function&);
 
 
 			private:
@@ -46,8 +65,6 @@ namespace dpsg {
 		constexpr DynamicArray<Type>::DynamicArray(std::size_t size) :
 			_size(size), _capacity(_capacity), _array(new Type[size]) {}
 
-	// Create a vector containing a copy of the list of objects given in arguments
-	// The objects must be copy-constructible
 	template<class Type>
 		constexpr DynamicArray<Type>::DynamicArray(const std::initializer_list<Type>& list) :
 			_size(list.size()), _capacity(list.size()), _array(new Type[list.size()]) {
@@ -67,14 +84,6 @@ namespace dpsg {
 				resize((_capacity + 1) * 2);
 			}
 			_array[_size++] = t;
-		}
-
-	template<class Type>
-		void DynamicArray<Type>::push_back(Type&& t) {
-			if(_size == _capacity) {
-				resize((_capacity + 1) * 2);
-			}
-			_array[_size++] = std::forward<Type>(t);
 		}
 
 	template<class Type>
@@ -124,6 +133,10 @@ namespace dpsg {
 			_size = new_size;
 		}
 
+	template<class Type>
+		template<class Function>
+		void DynamicArray<Type>::sort(const Function& compare) {
+		}
 
 
 }

@@ -19,6 +19,10 @@ class SingleLinkedList {
 
 		constexpr std::size_t size() const;
 
+		// Sort the list according to the comparison function given in argument (bubble sort)
+		template<class Compare>
+		void sort(const Compare&);
+
 
 	private:
 		struct Node {
@@ -30,7 +34,6 @@ class SingleLinkedList {
 			struct basic_iterator {
 				constexpr basic_iterator(T*);
 				constexpr basic_iterator();
-				//constexpr basic_iterator(const basic_iterator&);
 				template<class C>
 					constexpr basic_iterator(const basic_iterator<C>&);
 
@@ -95,11 +98,13 @@ SingleLinkedList<Type>::~SingleLinkedList() {
 template<class Type>
 void SingleLinkedList<Type>::push_front(const Type& t) {
 	_first = new Node{ Type(t), _first };
+	++_size;
 }
 
 template<class Type>
 void SingleLinkedList<Type>::push_front(Type&& t) {
 	_first = new Node{ Type(std::forward<Type>(t)), _first };
+	++_size;
 }
 
 template<class Type>
@@ -150,6 +155,7 @@ void SingleLinkedList<Type>::erase(const iterator& el) const {
 	std::swap(el->value, tmp->value);
 	el->next = tmp->next;
 	delete tmp;
+	--_size;
 }
 
 template<class Type>
@@ -165,9 +171,30 @@ template<class Functor>
 typename SingleLinkedList<Type>::iterator SingleLinkedList<Type>::find(const Functor& func) {
 	auto it = begin();
 	for(; it != end(); ++it)
-		if(fun(*it)) break;
+		if(func(*it)) break;
 	return it;
 }
+
+template<class Type>
+template<class Compare>
+void SingleLinkedList<Type>::sort(const Compare& compare) {
+	auto end = this->end();
+	do { // iterate over the list
+		auto new_end = begin(); // Set last sorted element to first, if this doesnt move the list is sorted
+		auto next = begin(); 
+		auto it = next++;
+		while(next != end) {
+			if(compare(*next, *it)) {
+				std::swap(*it, *next);
+				new_end = it; //we sorted these elements
+			}
+			++next;
+			++it;
+		}
+		end = new_end; // set end of virtual list to last sorted element
+	} while(end != begin()); // until the end of the virtual list is the first element
+}
+
 template<class Type>
 template<class T>
 constexpr SingleLinkedList<Type>::basic_iterator<T>::basic_iterator() : _pointer(nullptr) {}
