@@ -45,8 +45,8 @@ class DynamicArray {
 		void resize(std::size_t);
 
 		// Sort the elements in the array according to the comparison function given in argument (quicksort)
-		template<class Function = std::less<Type>>
-			void sort(const Function& = std::less<Type>());
+		template<class Compare = std::less<Type>>
+			void sort(const Compare& = Compare());
 
 		typedef Type* iterator;
 		typedef const iterator const_iterator;
@@ -173,8 +173,8 @@ typename DynamicArray<Type>::const_iterator DynamicArray<Type>::end() const {
 }
 
 template<class Type>
-template<class Function>
-void DynamicArray<Type>::sort(const Function& compare) {
+template<class Compare>
+void DynamicArray<Type>::sort(const Compare& compare) {
 	_sort(compare, 0, size() - 1);
 }
 
@@ -203,8 +203,8 @@ namespace details {
 }
 
 template<class Type>
-template<class Function>
-void DynamicArray<Type>::_sort(const Function& compare, std::size_t beg, std::size_t end) {
+template<class Compare>
+void DynamicArray<Type>::_sort(const Compare& compare, std::size_t beg, std::size_t end) {
 	if(beg < end) {
 		std::size_t p = _partition(compare, beg, end);
 		_sort(compare, beg, p);
@@ -213,8 +213,8 @@ void DynamicArray<Type>::_sort(const Function& compare, std::size_t beg, std::si
 }
 
 template<class Type>
-template<class Function>
-std::size_t DynamicArray<Type>::_partition(const Function& compare, std::size_t beg, std::size_t end) {
+template<class Compare>
+std::size_t DynamicArray<Type>::_partition(const Compare& compare, std::size_t beg, std::size_t end) {
 	// if beg + end overflows, the position will not be exactly right but size_t is unsigned, garanteeing a value btw 0 and end, so the result won't cause a segfault
 	std::size_t pivot = details::median_of_three(_array[beg], _array[end], _array[(beg + end) / 2]);
 
