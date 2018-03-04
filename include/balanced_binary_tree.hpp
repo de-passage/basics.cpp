@@ -138,7 +138,6 @@ typename BalancedBinaryTree<Type>::iterator& BalancedBinaryTree<Type>::iterator:
 	if(front->lhv == nullptr && front->rhv == nullptr) { // Leaf
 		_path.pop_front();
 		if(_path.first()->lhv == front) {// we were in left node
-			std::cout << "We should have been here" << std::endl;
 			ascend_left();
 		} 
 	}
