@@ -68,7 +68,7 @@ class SingleLinkedList {
 		constexpr iterator end();
 		constexpr const_iterator end() const;
 
-		void erase(const iterator&) const;
+		void erase(const iterator&);
 		iterator find(const Type& value);
 		template<class Functor>
 			iterator find(const Functor& value);
@@ -111,6 +111,7 @@ template<class Type>
 void SingleLinkedList<Type>::pop_front() {
 	Node* tmp = _first;
 	_first = _first->next;
+	--_size;
 	delete tmp;
 }
 
@@ -150,7 +151,7 @@ constexpr typename SingleLinkedList<Type>::const_iterator SingleLinkedList<Type>
 }
 
 template<class Type>
-void SingleLinkedList<Type>::erase(const iterator& el) const {
+void SingleLinkedList<Type>::erase(const iterator& el) {
 	Node* tmp = el->next;
 	std::swap(el->value, tmp->value);
 	el->next = tmp->next;
