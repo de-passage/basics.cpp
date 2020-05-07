@@ -50,7 +50,7 @@ endif()
 # Now simply link against gtest or gtest_main as needed. Eg
 
 set(TEST_SRC
-    tests/test.cpp)
+    tests/hash_table.cpp)
 add_executable(tests ${TEST_SRC})
 target_link_libraries(tests gtest_main)
 target_include_directories(tests PUBLIC include)
