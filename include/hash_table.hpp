@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <string>
 #include <stdexcept>
+#include <initializer_list>
 #include "single_linked_list.hpp"
 #include "details/hash.hpp"
 
@@ -26,6 +27,8 @@ struct HashTable {
 	// Throw a std::runtime_error if the value is not in the table
 	Type operator[](const Type&) const;
 	Type& operator[](const Type&);
+
+	std::size_t size() const { return _size; }
 
 	private:
 	std::size_t _size, _capacity;
@@ -106,12 +109,12 @@ void HashTable<T, H>::erase(const T& val) {
 }
 
 template<class T, class H>
-HashTable<T, H>::Maybe<const T> HashTable<T, H>::find(const T& value) const {
+typename HashTable<T, H>::template Maybe<const T> HashTable<T, H>::find(const T& value) const {
 	return const_cast<HashTable<T, H>*>(this)->find(value);
 }
 
 template<class T, class H>
-HashTable<T, H>::Maybe<T> HashTable<T, H>::find(const T& value) {
+typename HashTable<T, H>::template Maybe<T> HashTable<T, H>::find(const T& value) {
 	auto& store = _store_for(value);
 	auto it = store.find(value);
 	return Maybe<T>(it == store.end() ? nullptr : &*it);
