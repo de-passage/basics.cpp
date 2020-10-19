@@ -71,8 +71,6 @@ TEST(LinkedList, Sort) {
 
   for (auto &l : s) {
     l.sort();
-    using namespace std;
-    copy(begin(l), end(l), ostream_iterator<int>(cout, ", "));
   }
 
   for (const auto &l : s) {

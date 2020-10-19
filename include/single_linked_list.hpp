@@ -258,21 +258,22 @@ void SingleLinkedList<Type>::sort(const Compare &compare) {
     return;
   auto end = this->end();
   const auto begin = this->begin();
-  while (end != begin) // until the end of the virtual list is the first element
-  {                    // iterate over the list
-    auto new_end = begin; // Set last sorted element to first, if this doesnt
-                          // move the list is sorted
+  while (end != begin)
+  // move the largest element to the end at every step,
+  // then move the end one element backward (toward 'begin')
+  {
     auto next = begin;
     auto it = next++;
-    while (next != end) {
-      if (compare(*next, *it)) {
-        std::iter_swap(it, next);
-        new_end = it; // we sorted these elements
+    while (next !=
+           end) { // iterates over all contiguous pairs in the sort space,
+      if (compare(*next, *it) > 0) {
+        std::iter_swap(it, next); // swapping the unordered ones, this brings
+                                  // the highest value to the end
       }
       ++next;
       ++it;
     }
-    end = new_end; // set end of virtual list to last sorted element
+    end = it;
   }
 }
 
