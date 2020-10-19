@@ -11,7 +11,7 @@ Insertion: N/A
 Deletion: N/A  
 Access: O(1)  
 Search: O(N) if the array is unsorted  
-Sort: The algorithm used here is heapsort
+Sort: The algorithm used here is heapsort  
 &ensp;&ensp;&ensp;Time: O(N*log(N)) in average, O(N^2) in worst case  
 &ensp;&ensp;&ensp;Space: O(1) auxiliary  
 
@@ -76,7 +76,7 @@ Insertion: O(log(N))
 Deletion: O(log(N))  
 Access: O(log(N)), access and search are the same operation  
 Search: O(log(N)), access and search are the same operation  
-Sort: N/A, already sorted
+Sort: N/A, already sorted  
 
 [code](https://github.com/de-passage/basics.cpp/blob/master/include/balanced_binary_tree.hpp)
 
