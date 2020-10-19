@@ -7,7 +7,12 @@
 template <class Type> class SingleLinkedList {
 public:
   constexpr SingleLinkedList();
-  constexpr SingleLinkedList(const std::initializer_list<Type> &);
+  SingleLinkedList(const std::initializer_list<Type> &);
+  constexpr SingleLinkedList(SingleLinkedList &&l) noexcept;
+  SingleLinkedList(const SingleLinkedList &l);
+  SingleLinkedList &operator=(SingleLinkedList &&l) noexcept;
+  SingleLinkedList &operator=(const SingleLinkedList &l);
+
   ~SingleLinkedList();
 
   void push_front(const Type &);
@@ -28,6 +33,8 @@ private:
     Type value;
     Node *next;
   };
+
+  static void _clean(Node *n);
 
   template <class T> struct basic_iterator {
     using difference_type = std::size_t;
@@ -83,19 +90,80 @@ constexpr SingleLinkedList<Type>::SingleLinkedList()
     : _first(nullptr), _size(0) {}
 
 template <class Type>
-constexpr SingleLinkedList<Type>::SingleLinkedList(
+SingleLinkedList<Type>::SingleLinkedList(
     const std::initializer_list<Type> &list)
     : _first(nullptr), _size(list.size()) {
-  for (auto it = list.begin(); it != list.end(); ++it) {
-    _first = new Node{Type(*it), _first};
+  if (_size > 0) {
+    auto it = list.begin();
+    Node *last = new Node{*it++, nullptr};
+    _first = last;
+    for (; it != list.end(); ++it) {
+      last->next = new Node{Type(*it), nullptr};
+      last = last->next;
+    }
   }
 }
 
+template <class Type>
+SingleLinkedList<Type>::SingleLinkedList(const SingleLinkedList<Type> &l)
+    : _first(nullptr), _size(l.size()) {
+  if (_size > 0) {
+    auto it = l.begin();
+    Node *last = new Node{*it++, nullptr};
+    _first = last;
+    for (; it != l.end(); ++it) {
+      last->next = new Node{Type(*it), nullptr};
+      last = last->next;
+    }
+  }
+}
+
+template <class Type>
+constexpr SingleLinkedList<Type>::SingleLinkedList(
+    SingleLinkedList<Type> &&l) noexcept
+    : _first(std::exchange(l._first, nullptr)), _size(l.size()) {
+  l._size = 0;
+}
+
+template <class Type>
+SingleLinkedList<Type> &
+SingleLinkedList<Type>::operator=(const SingleLinkedList<Type> &l) {
+  Node *f = nullptr;
+  if (l.size() > 0) {
+    Node *p = l._first;
+    f = new Node{p->value, nullptr};
+    p = p->next;
+    while (p != nullptr) {
+      f->next = new Node{p->value, nullptr};
+      f = f->next;
+      p = p->next;
+    }
+  }
+  std::swap(f, _first);
+  _size() = l.size();
+  _clean(f);
+  return *this;
+}
+
+template <class Type>
+SingleLinkedList<Type> &
+SingleLinkedList<Type>::operator=(SingleLinkedList<Type> &&l) noexcept {
+  std::swap(l._first, _first);
+  std::swap(l._size, _size);
+  _clean(l._first);
+  l._size = 0;
+  return *this;
+}
+
 template <class Type> SingleLinkedList<Type>::~SingleLinkedList() {
+  _clean(_first);
+}
+
+template <class Type> void SingleLinkedList<Type>::_clean(Node *first) {
   Node *tmp;
-  while (_first != nullptr) {
-    tmp = _first;
-    _first = _first->next;
+  while (first != nullptr) {
+    tmp = first;
+    first = first->next;
     delete tmp;
   }
 }
@@ -186,23 +254,26 @@ SingleLinkedList<Type>::find(const Functor &func) {
 template <class Type>
 template <class Compare>
 void SingleLinkedList<Type>::sort(const Compare &compare) {
+  if (size() < 2)
+    return;
   auto end = this->end();
-  do {                      // iterate over the list
-    auto new_end = begin(); // Set last sorted element to first, if this doesnt
-                            // move the list is sorted
-    auto next = begin();
+  const auto begin = this->begin();
+  while (end != begin) // until the end of the virtual list is the first element
+  {                    // iterate over the list
+    auto new_end = begin; // Set last sorted element to first, if this doesnt
+                          // move the list is sorted
+    auto next = begin;
     auto it = next++;
     while (next != end) {
       if (compare(*next, *it)) {
-        std::swap(*it, *next);
+        std::iter_swap(it, next);
         new_end = it; // we sorted these elements
       }
       ++next;
       ++it;
     }
     end = new_end; // set end of virtual list to last sorted element
-  } while (end !=
-           begin()); // until the end of the virtual list is the first element
+  }
 }
 
 template <class Type>
@@ -225,27 +296,28 @@ constexpr SingleLinkedList<Type>::basic_iterator<T>::basic_iterator(
 template <class Type>
 template <class T>
 constexpr typename SingleLinkedList<Type>::template basic_iterator<T>::reference
-    SingleLinkedList<Type>::basic_iterator<T>::operator*() const {
+SingleLinkedList<Type>::basic_iterator<T>::operator*() const {
   return _pointer->value;
 }
 
 template <class Type>
 template <class T>
 constexpr typename SingleLinkedList<Type>::template basic_iterator<T>::reference
-    SingleLinkedList<Type>::basic_iterator<T>::operator*() {
+SingleLinkedList<Type>::basic_iterator<T>::operator*() {
   return _pointer->value;
 }
 
 template <class Type>
 template <class T>
 constexpr const typename SingleLinkedList<Type>::template basic_iterator<
-    T>::pointer SingleLinkedList<Type>::basic_iterator<T>::operator->() const {
+    T>::pointer
+SingleLinkedList<Type>::basic_iterator<T>::operator->() const {
   return &_pointer->value;
 }
 template <class Type>
 template <class T>
 constexpr typename SingleLinkedList<Type>::template basic_iterator<T>::pointer
-    SingleLinkedList<Type>::basic_iterator<T>::operator->() {
+SingleLinkedList<Type>::basic_iterator<T>::operator->() {
   return &_pointer->value;
 }
 
@@ -279,4 +351,24 @@ constexpr bool SingleLinkedList<Type>::basic_iterator<T>::operator!=(
     const basic_iterator<U> &node) const {
   return !(*this == node);
 }
+
+template <class T>
+constexpr bool operator==(const SingleLinkedList<T> &lhv,
+                          const SingleLinkedList<T> &rhv) {
+  if (lhv.size() != rhv.size())
+    return false;
+  for (auto it1 = lhv.begin(), it2 = rhv.begin(), e = lhv.end(); it1 != e;
+       ++it1, ++it2) {
+    if (*it1 != *it2)
+      return false;
+  }
+  return true;
+}
+
+template <class T>
+constexpr bool operator!=(const SingleLinkedList<T> &lhv,
+                          const SingleLinkedList<T> &rhv) {
+  return !(lhv == rhv);
+}
+
 #endif // GUARD_SINGLE_LINKED_LIST_HPP__

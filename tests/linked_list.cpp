@@ -4,6 +4,8 @@
 #include "utility.hpp"
 
 #include <iostream>
+#include <iterator>
+#include <type_traits>
 
 TEST(LinkedList, DefaultCtor) {
   SingleLinkedList<int> l;
@@ -22,19 +24,62 @@ TEST(LinkedList, ListCtor) {
   }
 }
 
+TEST(LinkedList, ListCpyCtor) {
+  const auto l = {1, 2, 3, 4, 5};
+  SingleLinkedList<int> sl = l;
+  SingleLinkedList<int> sl2 = sl;
+  ASSERT_EQ(sl.size(), 5_z);
+  ASSERT_EQ(sl.size(), sl2.size());
+  for (auto it = sl.begin(), jt = sl2.begin(); it != sl.end(); ++it, ++jt) {
+    ASSERT_EQ(*it, *jt);
+  }
+}
+
+TEST(LinkedList, ListMvCtor) {
+  const auto l = {1, 2, 3, 4, 5};
+  SingleLinkedList<int> sl = l;
+  SingleLinkedList<int> sl2 = std::move(sl);
+  ASSERT_EQ(sl.size(), 0_z);
+  ASSERT_EQ(sl2.size(), 5_z);
+  auto b = std::begin(l);
+  for (auto v : sl2) {
+    ASSERT_EQ(*b++, v);
+  }
+}
+
+constexpr static inline auto sorted =
+    [](auto &&sll) -> std::remove_reference_t<decltype(sll)> && {
+  sll.sort();
+  return std::forward<std::remove_reference_t<decltype(sll)>>(sll);
+};
+
+TEST(LinkedList, SortEmpty) {
+  using SLL = SingleLinkedList<int>;
+  ASSERT_EQ((SLL{}), sorted(SLL{}));
+}
+
+TEST(LinkedList, SortNoop) {
+  using SLL = SingleLinkedList<int>;
+  ASSERT_EQ((SLL{2}), sorted(SLL{2}));
+  ASSERT_EQ((SLL{1, 2}), sorted(SLL{1, 2}));
+  ASSERT_EQ((SLL{1, 2, 3}), sorted(SLL{1, 2, 3}));
+}
+
 TEST(LinkedList, Sort) {
-    using SLL = SingleLinkedList<int>;
-    SLL s[3] = { { 5, 4, 3, 2, 1 }, { 1, 2, 3, 4, 5 }, { 4, 2, 5, 1, 3 } };
+  using SLL = SingleLinkedList<int>;
+  SLL s[3] = {{5, 4, 3, 2, 1}, {1, 2, 3, 4, 5}, {4, 2, 5, 1, 3}};
 
-    for(auto& l : s) {
-        l.sort();
-    }
+  for (auto &l : s) {
+    l.sort();
+    using namespace std;
+    copy(begin(l), end(l), ostream_iterator<int>(cout, ", "));
+  }
 
-    for (const auto& l : s) {
-        auto min = 0;
-        for(const auto i : l) {
-            ASSERT_LT(min, i);
-            min = i;
-        }
+  for (const auto &l : s) {
+    auto min = 0;
+    for (const auto i : l) {
+      ASSERT_LT(min, i);
+      min = i;
     }
+  }
 }
