@@ -39,3 +39,4 @@ src/
 bin
 
 bazel-*
+compile_commands.json
