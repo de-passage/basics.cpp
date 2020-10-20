@@ -17,6 +17,7 @@ public:
 
   void push_front(const Type &);
   void push_front(Type &&);
+  template <class... Args> void emplace_front(Args &&...);
   void pop_front();
   const Type &first() const;
   Type &first();
@@ -131,16 +132,17 @@ SingleLinkedList<Type>::operator=(const SingleLinkedList<Type> &l) {
   Node *f = nullptr;
   if (l.size() > 0) {
     Node *p = l._first;
-    f = new Node{p->value, nullptr};
+    Node *n = new Node{p->value, nullptr};
+    f = n;
     p = p->next;
     while (p != nullptr) {
-      f->next = new Node{p->value, nullptr};
-      f = f->next;
+      n->next = new Node{p->value, nullptr};
+      n = n->next;
       p = p->next;
     }
   }
   std::swap(f, _first);
-  _size() = l.size();
+  _size = l.size();
   _clean(f);
   return *this;
 }
@@ -174,7 +176,14 @@ template <class Type> void SingleLinkedList<Type>::push_front(const Type &t) {
 }
 
 template <class Type> void SingleLinkedList<Type>::push_front(Type &&t) {
-  _first = new Node{Type(std::forward<Type>(t)), _first};
+  _first = new Node{Type(std::move(t)), _first};
+  ++_size;
+}
+
+template <class Type>
+template <class... Args>
+void SingleLinkedList<Type>::emplace_front(Args &&... args) {
+  _first = new Node{Type(std::forward<Args>(args)...), _first};
   ++_size;
 }
 
@@ -264,8 +273,8 @@ void SingleLinkedList<Type>::sort(const Compare &compare) {
   {
     auto next = begin;
     auto it = next++;
-    while (next !=
-           end) { // iterates over all contiguous pairs in the sort space,
+    while (next != end) {
+      // iterates over all contiguous pairs in the sort space,
       if (compare(*next, *it) > 0) {
         std::iter_swap(it, next); // swapping the unordered ones, this brings
                                   // the highest value to the end

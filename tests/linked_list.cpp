@@ -5,16 +5,18 @@
 
 #include <iostream>
 #include <iterator>
+#include <numeric>
 #include <type_traits>
 
+using SLL = SingleLinkedList<int>;
 TEST(LinkedList, DefaultCtor) {
-  SingleLinkedList<int> l;
+  SLL l;
   ASSERT_EQ(l.size(), 0_z);
 }
 
 TEST(LinkedList, ListCtor) {
   const auto l = {1, 2, 3, 4, 5};
-  SingleLinkedList<int> sl = l;
+  SLL sl = l;
   ASSERT_EQ(sl.size(), 5_z);
 
   auto j = l.begin();
@@ -26,8 +28,8 @@ TEST(LinkedList, ListCtor) {
 
 TEST(LinkedList, ListCpyCtor) {
   const auto l = {1, 2, 3, 4, 5};
-  SingleLinkedList<int> sl = l;
-  SingleLinkedList<int> sl2 = sl;
+  SLL sl = l;
+  SLL sl2 = sl;
   ASSERT_EQ(sl.size(), 5_z);
   ASSERT_EQ(sl.size(), sl2.size());
   for (auto it = sl.begin(), jt = sl2.begin(); it != sl.end(); ++it, ++jt) {
@@ -37,8 +39,8 @@ TEST(LinkedList, ListCpyCtor) {
 
 TEST(LinkedList, ListMvCtor) {
   const auto l = {1, 2, 3, 4, 5};
-  SingleLinkedList<int> sl = l;
-  SingleLinkedList<int> sl2 = std::move(sl);
+  SLL sl = l;
+  SLL sl2 = std::move(sl);
   ASSERT_EQ(sl.size(), 0_z);
   ASSERT_EQ(sl2.size(), 5_z);
   auto b = std::begin(l);
@@ -47,26 +49,33 @@ TEST(LinkedList, ListMvCtor) {
   }
 }
 
+TEST(LinkedList, Assignment) {
+  SLL s;
+  SLL s2 = {1, 2, 3, 4, 5};
+  s = s2;
+  ASSERT_EQ(s.size(), 5_z);
+  int r = 1;
+  for (auto i : s) {
+    ASSERT_EQ(r++, i);
+  }
+  ASSERT_EQ(r, 6);
+}
+
 constexpr static inline auto sorted =
     [](auto &&sll) -> std::remove_reference_t<decltype(sll)> && {
   sll.sort();
   return std::forward<std::remove_reference_t<decltype(sll)>>(sll);
 };
 
-TEST(LinkedList, SortEmpty) {
-  using SLL = SingleLinkedList<int>;
-  ASSERT_EQ((SLL{}), sorted(SLL{}));
-}
+TEST(LinkedList, SortEmpty) { ASSERT_EQ((SLL{}), sorted(SLL{})); }
 
 TEST(LinkedList, SortNoop) {
-  using SLL = SingleLinkedList<int>;
   ASSERT_EQ((SLL{2}), sorted(SLL{2}));
   ASSERT_EQ((SLL{1, 2}), sorted(SLL{1, 2}));
   ASSERT_EQ((SLL{1, 2, 3}), sorted(SLL{1, 2, 3}));
 }
 
 TEST(LinkedList, Sort) {
-  using SLL = SingleLinkedList<int>;
   SLL s[3] = {{5, 4, 3, 2, 1}, {1, 2, 3, 4, 5}, {4, 2, 5, 1, 3}};
 
   for (auto &l : s) {
@@ -80,4 +89,28 @@ TEST(LinkedList, Sort) {
       min = i;
     }
   }
+}
+
+struct wrapped_int {
+  constexpr wrapped_int(int i, int j) : value(i + j) {}
+  int value = 0;
+};
+
+TEST(LinkedList, AddElements) {
+  using SLL = SingleLinkedList<wrapped_int>;
+  SLL s = {{0, 0}, {0, 1}, {1, 1}};
+  using namespace std;
+  int tot = accumulate(begin(s), end(s), 0,
+                       [](int acc, const auto &w) { return acc + w.value; });
+  ASSERT_EQ(tot, 3);
+  wrapped_int wi{3, 4};
+  s.push_front(wi);
+  ASSERT_EQ(s.size(), 4_z);
+  ASSERT_EQ(s.first().value, 7);
+  s.push_front(wrapped_int{5, 4});
+  ASSERT_EQ(s.size(), 5_z);
+  ASSERT_EQ(s.first().value, 9);
+  s.emplace_front(6, 5);
+  ASSERT_EQ(s.size(), 6_z);
+  ASSERT_EQ(s.first().value, 11);
 }
