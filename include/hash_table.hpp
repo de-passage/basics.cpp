@@ -91,7 +91,7 @@ HashTable<T, H>::HashTable(const HashTable<T, H> &h)
     : _size(0), _capacity(h._capacity),
       _storage(new SingleLinkedList<T>[_capacity] {}) {
   try {
-    for (int i = 0; i < h._capacity; ++i) {
+    for (std::size_t i = 0; i < h._capacity; ++i) {
       for (const auto &v : h._storage[i]) {
         insert(v);
       }
@@ -101,6 +101,12 @@ HashTable<T, H>::HashTable(const HashTable<T, H> &h)
     throw;
   }
 }
+
+template <class T, class H>
+HashTable<T, H>::HashTable(HashTable<T, H> &&h)
+    : _size(std::exchange(h._size, 0)),
+      _capacity(std::exchange(h._capacity, 2)),
+      _storage(std::exchange(h._storage, new SingleLinkedList<T>[2])) {}
 
 template <class T, class H> void HashTable<T, H>::insert(const T &val) {
   // Hash the value then find the associated address

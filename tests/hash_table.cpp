@@ -3,6 +3,7 @@
 #include "utility.hpp"
 #include "gtest/gtest.h"
 
+#include <stdexcept>
 #include <vector>
 
 using HT = HashTable<int>;
@@ -27,6 +28,17 @@ TEST(HashTable, CpyCtor) {
   EXPECT_EQ(h.size(), h2.size());
   for (int i = 1; i <= 5; ++i) {
     EXPECT_NO_THROW(h[i]);
+    EXPECT_NO_THROW(h2[i]);
+  }
+}
+
+TEST(HashTable, MoveCtor) {
+  HT h = {1, 2, 3, 4, 5};
+  HT h2 = std::move(h);
+  EXPECT_EQ(h.size(), 0_z);
+  EXPECT_EQ(h2.size(), 5_z);
+  for (int i = 1; i <= 5; ++i) {
+    EXPECT_THROW(h[i], std::out_of_range);
     EXPECT_NO_THROW(h2[i]);
   }
 }
