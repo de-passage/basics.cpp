@@ -42,3 +42,36 @@ TEST(HashTable, MoveCtor) {
     EXPECT_NO_THROW(h2[i]);
   }
 }
+
+TEST(HashTable, AddElements) {
+  HT h;
+  h.insert(0);
+  ASSERT_EQ(h.size(), 1_z);
+  ASSERT_NO_THROW(h[0]);
+  h.insert(10);
+  ASSERT_EQ(h.size(), 2_z);
+  ASSERT_NO_THROW(h[10]);
+  h.insert(42);
+  ASSERT_EQ(h.size(), 3_z);
+  ASSERT_NO_THROW(h[42]);
+  ASSERT_THROW(h.insert(42), std::runtime_error);
+  ASSERT_EQ(h.size(), 3_z);
+}
+
+TEST(HashTable, RemoveElements) {
+  HT h = {1, 2, 3, 4, 5};
+  h.erase(42);
+  ASSERT_EQ(h.size(), 5_z);
+  h.erase(1);
+  ASSERT_EQ(h.size(), 4_z);
+  h.erase(5);
+  ASSERT_EQ(h.size(), 3_z);
+  h.erase(3);
+  ASSERT_EQ(h.size(), 2_z);
+  h.erase(1);
+  ASSERT_EQ(h.size(), 2_z);
+  h.erase(2);
+  ASSERT_EQ(h.size(), 1_z);
+  h.erase(4);
+  ASSERT_EQ(h.size(), 0_z);
+}

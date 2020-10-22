@@ -128,4 +128,13 @@ TEST(LinkedList, RemoveElements) {
   s.erase(it);
   ASSERT_EQ(s.size(), 4);
   ASSERT_EQ((SLL{1, 2, 4, 5}), s);
+
+  s.erase(s.begin());
+  ASSERT_EQ(s.size(), 3);
+  ASSERT_EQ((SLL{2, 4, 5}), s);
+
+  s.erase(s.begin());
+  s.erase(s.begin());
+  s.erase(s.begin());
+  ASSERT_EQ(s.size(), 0);
 }

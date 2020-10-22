@@ -235,7 +235,7 @@ SingleLinkedList<Type>::end() const {
 template <class Type> void SingleLinkedList<Type>::erase(const iterator &el) {
   Node *tmp = el._pointer->next;
   std::swap(el._pointer->value, tmp->value);
-  el._pointer->next = tmp->next;
+  el._pointer->next = tmp ? tmp->next : nullptr;
   delete tmp;
   --_size;
 }
