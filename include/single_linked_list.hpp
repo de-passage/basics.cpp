@@ -64,6 +64,7 @@ private:
 
   private:
     T *_pointer;
+    template <class U> friend class SingleLinkedList;
   };
 
   Node *_first;
@@ -232,9 +233,9 @@ SingleLinkedList<Type>::end() const {
 }
 
 template <class Type> void SingleLinkedList<Type>::erase(const iterator &el) {
-  Node *tmp = el->next;
-  std::swap(el->value, tmp->value);
-  el->next = tmp->next;
+  Node *tmp = el._pointer->next;
+  std::swap(el._pointer->value, tmp->value);
+  el._pointer->next = tmp->next;
   delete tmp;
   --_size;
 }

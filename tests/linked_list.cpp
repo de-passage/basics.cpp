@@ -114,3 +114,18 @@ TEST(LinkedList, AddElements) {
   ASSERT_EQ(s.size(), 6_z);
   ASSERT_EQ(s.first().value, 11);
 }
+
+TEST(LinkedList, RemoveElements) {
+  SLL s = {0, 1, 2, 3, 4, 5};
+  s.pop_front();
+  ASSERT_EQ(s.size(), 5);
+  int i = 1;
+  for (auto v : s) {
+    ASSERT_EQ(v, i++);
+  }
+
+  auto it = std::next(s.begin(), 2);
+  s.erase(it);
+  ASSERT_EQ(s.size(), 4);
+  ASSERT_EQ((SLL{1, 2, 4, 5}), s);
+}
