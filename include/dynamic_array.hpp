@@ -114,6 +114,32 @@ template <class Type> DynamicArray<Type>::~DynamicArray() {
     delete[] _array;
 }
 
+template <class Type>
+DynamicArray<Type> &DynamicArray<Type>::operator=(const DynamicArray &arr) {
+  Type *array = nullptr;
+  if (arr.size() != 0) {
+    array = new Type[arr.capacity()];
+    for (std::size_t i = 0; i < arr.size(); ++i) {
+      array[i] = arr[i];
+    }
+  }
+  std::swap(_array, array);
+  _capacity = arr.capacity();
+  _size = arr.size();
+  delete[] array;
+  return *this;
+}
+
+template <class Type>
+DynamicArray<Type> &DynamicArray<Type>::operator=(DynamicArray &&arr) noexcept {
+  Type *array = std::exchange(arr._array, nullptr);
+  std::swap(array, _array);
+  _size = std::exchange(arr._size, 0);
+  _capacity = std::exchange(arr._capacity, 0);
+  delete[] array;
+  return *this;
+}
+
 template <class Type> void DynamicArray<Type>::push_back(const Type &t) {
   if (_size >= _capacity) {
     resize((_capacity + 1) * 2);
