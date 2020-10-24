@@ -6,7 +6,6 @@
 #include <stdexcept>
 #include <utility>
 
-
 template <class Type> class DynamicArray {
 public:
   // Constructs an empty array of size 0
@@ -17,6 +16,12 @@ public:
 
   // Create an array containing the given elements
   constexpr DynamicArray(const std::initializer_list<Type> &list);
+
+  DynamicArray(const DynamicArray &);
+  DynamicArray(DynamicArray &&) noexcept;
+  DynamicArray &operator=(const DynamicArray &);
+  DynamicArray &operator=(DynamicArray &&) noexcept;
+
   ~DynamicArray();
 
   // Add an element at the end of the array
@@ -88,6 +93,22 @@ constexpr DynamicArray<Type>::DynamicArray(
   for (auto it = list.begin(); it < list.end(); ++it, ++i)
     _array[i] = *it;
 }
+
+template <class Type>
+DynamicArray<Type>::DynamicArray(const DynamicArray &arr)
+    : _size(arr.size()), _capacity(arr.capacity()),
+      _array(new Type[arr.size()]) {
+  for (std::size_t i = 0; i < _size; ++i) {
+    _array[i] = arr[i];
+  }
+}
+
+template <class Type>
+DynamicArray<Type>::DynamicArray(DynamicArray &&arr) noexcept
+    : _size(std::exchange(arr._size, 0)),
+      _capacity(std::exchange(arr._capacity, 0)),
+      _array(std::exchange(arr._array, nullptr)) {}
+
 template <class Type> DynamicArray<Type>::~DynamicArray() {
   if (_array != nullptr)
     delete[] _array;
@@ -116,10 +137,7 @@ const Type &DynamicArray<Type>::at(std::size_t pos) const {
 }
 template <class Type> Type &DynamicArray<Type>::at(std::size_t pos) {
   if (pos >= _size) {
-    std::ostringstream oss;
-    oss << "DynamicArray::at() called out of range: index '" << pos
-        << "' queried but size is " << _size << ".";
-    throw std::out_of_range(oss.str());
+    throw std::out_of_range("out of range");
   } else
     return (*this)[pos];
 }
@@ -175,8 +193,8 @@ void DynamicArray<Type>::sort(const Compare &compare) {
 }
 
 namespace details {
-static inline std::size_t median_of_three(std::size_t top, std::size_t middle,
-                                          std::size_t bottom) {
+std::size_t median_of_three(std::size_t top, std::size_t middle,
+                            std::size_t bottom) {
 
   return std::max(std::min(top, middle),
                   std::min(std::max(top, middle), bottom)); // Simplified
