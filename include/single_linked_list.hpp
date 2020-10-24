@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <initializer_list>
+#include <type_traits>
 
 template <class Type> class SingleLinkedList {
 public:
@@ -31,8 +32,63 @@ public:
 
 private:
   struct Node {
-    Type value;
-    Node *next;
+    Node() noexcept = default;
+    explicit Node(nullptr_t) noexcept : _next(nullptr) {}
+    explicit Node(Type t) : _next(new Node()) {
+      ::new (&_storage) Type(std::move(t));
+    }
+    Node(Type t, nullptr_t) = delete;
+    Node(Type t, Node *n) : _next(n) { ::new (&_storage) Type(std::move(t)); }
+    Node(Node &&node) noexcept : _next(std::exchange(node._next, nullptr)) {
+      if (_next)
+        ::new (&_storage) Type{std::move(*node.get_ptr())};
+    }
+    Node(const Node &) = delete;
+    Node &operator=(Node &&node) noexcept {
+      clear();
+      std::swap(_next, node._next);
+      if (_next) {
+        ::new (&_storage) Type{std::move(*node.get_ptr())};
+        node.get_ptr()->~Type();
+      }
+      return *this;
+    }
+    ~Node() { clear(); }
+
+    const Type &value() const { return *get_ptr(); }
+    Type &value() { return *get_ptr(); }
+
+    Node *clear() {
+      if (_next) {
+        get_ptr()->~Type();
+        return std::exchange(_next, nullptr);
+      }
+      return nullptr;
+    }
+
+    const Node *next() const { return _next; }
+    Node *next() { return _next; }
+    Node *reset(Type t, Node *n) {
+      Node *r = clear();
+      _next = n;
+      ::new (&_storage) Type{std::move(t)};
+      return r;
+    }
+    void reset(Type t) { reset(std::move(t), new Node{}); }
+
+    friend void swap(Node &ln, Node &rn) noexcept {
+      Node n = std::move(ln);
+      ln = std::move(rn);
+      rn = std::move(n);
+    }
+
+  private:
+    std::aligned_storage_t<sizeof(Type), alignof(Type)> _storage;
+    Type *get_ptr() { return reinterpret_cast<Type *>(&_storage); }
+    const Type *get_ptr() const {
+      return reinterpret_cast<const Type *>(&_storage);
+    }
+    Node *_next;
   };
 
   static void _clean(Node *n);
@@ -67,7 +123,7 @@ private:
     template <class U> friend class SingleLinkedList;
   };
 
-  Node *_first;
+  Node _first;
   std::size_t _size;
 
 public:
@@ -97,11 +153,10 @@ SingleLinkedList<Type>::SingleLinkedList(
     : _first(nullptr), _size(list.size()) {
   if (_size > 0) {
     auto it = list.begin();
-    Node *last = new Node{*it++, nullptr};
-    _first = last;
+    Node *last = &_first;
     for (; it != list.end(); ++it) {
-      last->next = new Node{Type(*it), nullptr};
-      last = last->next;
+      last->reset(*it);
+      last = last->next();
     }
   }
 }
@@ -111,11 +166,10 @@ SingleLinkedList<Type>::SingleLinkedList(const SingleLinkedList<Type> &l)
     : _first(nullptr), _size(l.size()) {
   if (_size > 0) {
     auto it = l.begin();
-    Node *last = new Node{*it++, nullptr};
-    _first = last;
+    Node *last = &_first;
     for (; it != l.end(); ++it) {
-      last->next = new Node{Type(*it), nullptr};
-      last = last->next;
+      last->reset(*it);
+      last = last->next();
     }
   }
 }
@@ -123,28 +177,25 @@ SingleLinkedList<Type>::SingleLinkedList(const SingleLinkedList<Type> &l)
 template <class Type>
 constexpr SingleLinkedList<Type>::SingleLinkedList(
     SingleLinkedList<Type> &&l) noexcept
-    : _first(std::exchange(l._first, nullptr)), _size(l.size()) {
+    : _first(std::exchange(l._first, Node{})), _size(l.size()) {
   l._size = 0;
 }
 
 template <class Type>
 SingleLinkedList<Type> &
 SingleLinkedList<Type>::operator=(const SingleLinkedList<Type> &l) {
-  Node *f = nullptr;
-  if (l.size() > 0) {
-    Node *p = l._first;
-    Node *n = new Node{p->value, nullptr};
-    f = n;
-    p = p->next;
-    while (p != nullptr) {
-      n->next = new Node{p->value, nullptr};
-      n = n->next;
-      p = p->next;
+  Node f{nullptr};
+  if (l._size > 0) {
+    auto it = l.begin();
+    Node *last = &f;
+    for (; it != l.end(); ++it) {
+      last->reset(*it);
+      last = last->next();
     }
   }
   std::swap(f, _first);
   _size = l.size();
-  _clean(f);
+  _clean(f.next());
   return *this;
 }
 
@@ -159,48 +210,48 @@ SingleLinkedList<Type>::operator=(SingleLinkedList<Type> &&l) noexcept {
 }
 
 template <class Type> SingleLinkedList<Type>::~SingleLinkedList() {
-  _clean(_first);
+  _clean(_first.next());
 }
 
 template <class Type> void SingleLinkedList<Type>::_clean(Node *first) {
   Node *tmp;
   while (first != nullptr) {
     tmp = first;
-    first = first->next;
+    first = first->next();
     delete tmp;
   }
 }
 
 template <class Type> void SingleLinkedList<Type>::push_front(const Type &t) {
-  _first = new Node{Type(t), _first};
+  _first.reset(t, new Node{std::move(_first)});
   ++_size;
 }
 
 template <class Type> void SingleLinkedList<Type>::push_front(Type &&t) {
-  _first = new Node{Type(std::move(t)), _first};
+  _first.reset(std::move(t), new Node{std::move(_first)});
   ++_size;
 }
 
 template <class Type>
 template <class... Args>
 void SingleLinkedList<Type>::emplace_front(Args &&... args) {
-  _first = new Node{Type(std::forward<Args>(args)...), _first};
+  _first.reset(Type(std::forward<Args>(args)...), new Node{std::move(_first)});
   ++_size;
 }
 
 template <class Type> void SingleLinkedList<Type>::pop_front() {
-  Node *tmp = _first;
-  _first = _first->next;
+  Node *tmp = _first.next();
+  _first = std::move(*tmp);
   --_size;
   delete tmp;
 }
 
 template <class Type> const Type &SingleLinkedList<Type>::first() const {
-  return _first->value;
+  return _first.value();
 }
 
 template <class Type> Type &SingleLinkedList<Type>::first() {
-  return _first->value;
+  return _first.value();
 }
 
 template <class Type>
@@ -211,13 +262,13 @@ constexpr std::size_t SingleLinkedList<Type>::size() const {
 template <class Type>
 constexpr typename SingleLinkedList<Type>::iterator
 SingleLinkedList<Type>::begin() {
-  return iterator(_first);
+  return iterator(&_first);
 }
 
 template <class Type>
 constexpr typename SingleLinkedList<Type>::const_iterator
 SingleLinkedList<Type>::begin() const {
-  return _first;
+  return &_first;
 }
 
 template <class Type>
@@ -233,9 +284,8 @@ SingleLinkedList<Type>::end() const {
 }
 
 template <class Type> void SingleLinkedList<Type>::erase(const iterator &el) {
-  Node *tmp = el._pointer->next;
-  std::swap(el._pointer->value, tmp->value);
-  el._pointer->next = tmp ? tmp->next : nullptr;
+  Node *tmp = el._pointer->next();
+  std::swap(*el._pointer, *tmp);
   delete tmp;
   --_size;
 }
@@ -308,14 +358,14 @@ template <class Type>
 template <class T>
 constexpr typename SingleLinkedList<Type>::template basic_iterator<T>::reference
 SingleLinkedList<Type>::basic_iterator<T>::operator*() const {
-  return _pointer->value;
+  return _pointer->value();
 }
 
 template <class Type>
 template <class T>
 constexpr typename SingleLinkedList<Type>::template basic_iterator<T>::reference
 SingleLinkedList<Type>::basic_iterator<T>::operator*() {
-  return _pointer->value;
+  return _pointer->value();
 }
 
 template <class Type>
@@ -336,7 +386,7 @@ template <class Type>
 template <class T>
 typename SingleLinkedList<Type>::template basic_iterator<T> &
 SingleLinkedList<Type>::basic_iterator<T>::operator++() {
-  _pointer = _pointer->next;
+  _pointer = _pointer->next();
   return *this;
 }
 template <class Type>
@@ -353,6 +403,9 @@ template <class T>
 template <class U>
 constexpr bool SingleLinkedList<Type>::basic_iterator<T>::operator==(
     const basic_iterator<U> &it) const {
+  if (it._pointer == nullptr) {
+    return !(_pointer && _pointer->next());
+  }
   return it._pointer == _pointer;
 }
 template <class Type>

@@ -137,8 +137,10 @@ template <class T, class H> void HashTable<T, H>::erase(const T &val) {
   SingleLinkedList<T> &store = _store_for(val);
 
   auto it = store.find(val);
-  if (it != store.end())
+  if (it != store.end()) {
     store.erase(it);
+    --_size;
+  }
 }
 
 template <class T, class H>
