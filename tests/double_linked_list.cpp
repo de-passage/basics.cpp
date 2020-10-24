@@ -75,8 +75,8 @@ TEST(DoubleLinkedList, MoveAssignment) {
   DLL d;
   DLL d2 = {1, 2, 3, 4, 5};
   d = std::move(d2);
-  ASSERT_EQ(d2.size(), 5_z);
-  ASSERT_EQ(d.size(), 0_z);
+  ASSERT_EQ(d.size(), 5_z);
+  ASSERT_EQ(d2.size(), 0_z);
   ASSERT_EQ(d2.begin(), d2.end());
   int r = 1;
   for (auto i : d) {
