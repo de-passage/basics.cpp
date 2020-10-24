@@ -224,6 +224,36 @@ template <class Type> void DoubleLinkedList<Type>::push_back(Type &&t) {
   ++_size;
 }
 
+template <class Type> void DoubleLinkedList<Type>::pop_front() {
+  if (_size > 0) {
+    Node *n = _first;
+    _first = _first->next;
+    if (_first) {
+      _first->previous = nullptr;
+    } else {
+      _last = nullptr;
+    }
+
+    delete n;
+    --_size;
+  }
+}
+
+template <class Type> void DoubleLinkedList<Type>::pop_back() {
+  if (_size > 0) {
+    Node *n = _last;
+    _last = _last->previous;
+    if (_last) {
+      _last->next = nullptr;
+    } else {
+      _first = nullptr;
+    }
+
+    delete n;
+    --_size;
+  }
+}
+
 template <class Type>
 constexpr const Type &DoubleLinkedList<Type>::first() const {
   return _first->value;

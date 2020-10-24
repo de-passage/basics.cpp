@@ -84,3 +84,47 @@ TEST(DoubleLinkedList, MoveAssignment) {
   }
   ASSERT_EQ(r, 6);
 }
+
+TEST(DoubleLinkedList, AddElements) {
+  DLL d = {0};
+  for (int i = 1; i <= 5; ++i) {
+    d.push_front(-i);
+    d.push_back(i);
+  }
+  ASSERT_EQ(d.size(), 11_z);
+  auto r = -5;
+  for (auto i : d) {
+    ASSERT_EQ(r++, i);
+  }
+  ASSERT_EQ(r, 6);
+}
+
+TEST(DoubleLinkedList, RemoveElements) {
+  DLL d = {0, 1, 2, 3, 4, 5, 6};
+  d.pop_front();
+  ASSERT_EQ(d.size(), 6_z);
+  ASSERT_EQ(d.first(), 1);
+  d.pop_back();
+  ASSERT_EQ(d.size(), 5_z);
+  ASSERT_EQ(d.last(), 5);
+
+  int r = 1;
+  for (auto i : d) {
+    ASSERT_EQ(r++, i);
+  }
+
+  while (d.size() > 0) {
+    d.pop_front();
+  }
+
+  ASSERT_EQ(d.size(), 0_z);
+  ASSERT_EQ(d.begin(), d.end());
+
+  d = DLL{1, 2, 3, 4};
+  while (d.size() > 0) {
+    d.pop_back();
+  }
+
+  ASSERT_EQ(d.size(), 0_z);
+  ASSERT_EQ(d.begin(), d.end());
+}
