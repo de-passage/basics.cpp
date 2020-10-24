@@ -405,4 +405,23 @@ constexpr bool DoubleLinkedList<Type>::basic_iterator<T>::operator!=(
   return !(n == *this);
 }
 
+template <class Type>
+constexpr bool operator==(const DoubleLinkedList<Type> &lhv,
+                          const DoubleLinkedList<Type> &rhv) {
+  if (lhv.size() != rhv.size())
+    return false;
+  for (auto it1 = lhv.begin(), it2 = rhv.begin(); it1 != lhv.end();
+       ++it1, ++it2) {
+    if (*it1 != *it2)
+      return false;
+  }
+  return true;
+}
+
+template <class Type>
+constexpr bool operator!=(const DoubleLinkedList<Type> &lhv,
+                          const DoubleLinkedList<Type> &rhv) {
+  return !(lhv == rhv);
+}
+
 #endif

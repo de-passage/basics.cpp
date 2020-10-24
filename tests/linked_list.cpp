@@ -61,12 +61,6 @@ TEST(LinkedList, Assignment) {
   ASSERT_EQ(r, 6);
 }
 
-constexpr static inline auto sorted =
-    [](auto &&sll) -> std::remove_reference_t<decltype(sll)> && {
-  sll.sort();
-  return std::forward<std::remove_reference_t<decltype(sll)>>(sll);
-};
-
 TEST(LinkedList, SortEmpty) { ASSERT_EQ((SLL{}), sorted(SLL{})); }
 
 TEST(LinkedList, SortNoop) {

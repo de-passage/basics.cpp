@@ -128,3 +128,27 @@ TEST(DoubleLinkedList, RemoveElements) {
   ASSERT_EQ(d.size(), 0_z);
   ASSERT_EQ(d.begin(), d.end());
 }
+
+TEST(DoubleLinkedList, SortEmpty) { ASSERT_EQ((DLL{}), sorted(DLL{})); }
+
+TEST(DoubleLinkedList, SortNoop) {
+  ASSERT_EQ((DLL{2}), sorted(DLL{2}));
+  ASSERT_EQ((DLL{1, 2}), sorted(DLL{1, 2}));
+  ASSERT_EQ((DLL{1, 2, 3}), sorted(DLL{1, 2, 3}));
+}
+
+TEST(DoubleLinkedList, Sort) {
+  DLL s[3] = {{5, 4, 3, 2, 1}, {1, 2, 3, 4, 5}, {4, 2, 5, 1, 3}};
+
+  for (auto &l : s) {
+    l.sort();
+  }
+
+  for (const auto &l : s) {
+    auto min = 0;
+    for (const auto i : l) {
+      ASSERT_LT(min, i);
+      min = i;
+    }
+  }
+}
