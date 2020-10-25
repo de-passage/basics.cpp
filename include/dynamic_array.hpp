@@ -215,6 +215,8 @@ typename DynamicArray<Type>::const_iterator DynamicArray<Type>::end() const {
 template <class Type>
 template <class Compare>
 void DynamicArray<Type>::sort(const Compare &compare) {
+  if (size() < 2)
+    return;
   _sort(compare, 0, size() - 1);
 }
 
@@ -249,7 +251,9 @@ template <class Type>
 template <class Compare>
 void DynamicArray<Type>::_sort(const Compare &compare, std::size_t beg,
                                std::size_t end) {
-  if (beg < end) {
+  if (beg + 1 == end && !compare(_array[beg], _array[end])) {
+    std::swap(_array[beg], _array[end]);
+  } else if (beg < end) {
     std::size_t p = _partition(compare, beg, end);
     _sort(compare, beg, p);
     _sort(compare, p + 1, end);
@@ -283,11 +287,30 @@ std::size_t DynamicArray<Type>::_partition(const Compare &compare,
 
     // if i >= j then all elements are on the right side of the pivot. return
     // the position of the pivot
-    if (i >= j)
+    if (i >= j || (j == i + 1 && _array[i] == _array[j]))
       return j;
     // swap the out of place elements.
     std::swap(_array[i], _array[j]);
   }
+}
+
+template <class Type>
+bool operator==(const DynamicArray<Type> &lhv, const DynamicArray<Type> &rhv) {
+  if (lhv.size() != rhv.size()) {
+    return false;
+  }
+  for (auto it1 = lhv.begin(), it2 = rhv.begin(); it1 != lhv.end();
+       ++it1, ++it2) {
+    if (*it1 != *it2) {
+      return false;
+    }
+  }
+  return true;
+}
+
+template <class Type>
+bool operator!=(const DynamicArray<Type> &lhv, const DynamicArray<Type> &rhv) {
+  return !(lhv == rhv);
 }
 
 #endif // GUARD_DYNAMIC_ARRAY_HPP__
