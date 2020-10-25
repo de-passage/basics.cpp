@@ -3,9 +3,10 @@
 
 #include "details/balanced_binary_tree_node.hpp"
 #include "single_linked_list.hpp"
-#include <initializer_list>
-#include <utility>
 
+#include <initializer_list>
+#include <stdexcept>
+#include <utility>
 
 template <class Type> class BalancedBinaryTree {
   typedef details::BalancedBinaryTreeNode<Type> Node;
@@ -16,9 +17,6 @@ public:
   ~BalancedBinaryTree();
 
   void insert(const Type &);
-
-  const Type &find(const Type &) const;
-  Type &find(const Type &);
 
   inline std::size_t size() const { return _size; }
 
@@ -32,6 +30,7 @@ public:
   struct iterator {
     constexpr iterator();
     constexpr iterator(Node *);
+    iterator(SingleLinkedList<Node *> &&);
 
     iterator &operator++();
     iterator &operator++(int);
@@ -59,6 +58,9 @@ public:
 
   const_iterator begin() const;
   const_iterator end() const;
+
+  const_iterator find(const Type &) const;
+  const Type &operator[](const Type &) const;
 };
 
 template <class Type>
@@ -75,10 +77,13 @@ constexpr BalancedBinaryTree<Type>::BalancedBinaryTree(
 }
 
 template <class Type> void BalancedBinaryTree<Type>::insert(const Type &value) {
-  if (_root)
+  if (_root) {
     _root = _root->insert(value);
-  else
+    ++_size;
+  } else {
     _root = new details::BalancedBinaryTreeNode<Type>(value);
+    _size = 1;
+  }
 }
 
 template <class Type>
@@ -100,13 +105,18 @@ template <class Type> BalancedBinaryTree<Type>::~BalancedBinaryTree() {
 
 template <class Type>
 constexpr BalancedBinaryTree<Type>::iterator::iterator() : _path() {}
+
 template <class Type>
-constexpr BalancedBinaryTree<Type>::iterator::iterator(Node *_root) : _path() {
-  while (_root != nullptr) {
-    _path.push_front(_root);
-    _root = _root->lhv;
+constexpr BalancedBinaryTree<Type>::iterator::iterator(Node *root) : _path() {
+  while (root != nullptr) {
+    _path.push_front(root);
+    root = root->lhv;
   }
 }
+
+template <class Type>
+BalancedBinaryTree<Type>::iterator::iterator(SingleLinkedList<Node *> &&l)
+    : _path(std::move(l)) {}
 
 template <class Type>
 typename BalancedBinaryTree<Type>::iterator &
@@ -250,6 +260,33 @@ void BalancedBinaryTree<
     front = _path.first();
     _path.pop_front();
   }
+}
+
+template <class Type>
+const Type &BalancedBinaryTree<Type>::operator[](const Type &t) const {
+  auto it = find(t);
+  if (it == end()) {
+    throw std::out_of_range("out of range access");
+  }
+  return *it;
+}
+
+template <class Type>
+typename BalancedBinaryTree<Type>::const_iterator
+BalancedBinaryTree<Type>::find(const Type &t) const {
+  SingleLinkedList<Node *> path;
+  auto *r = _root;
+  while (r != nullptr) {
+    path.push_front(r);
+    if (t == r->value) {
+      return {std::move(path)};
+    } else if (t < r->value) {
+      r = r->lhv;
+    } else if (t > r->value) {
+      r = r->rhv;
+    }
+  }
+  return {};
 }
 
 #endif // GUARD_BALANCED_BINARY_TREE_HPP__
