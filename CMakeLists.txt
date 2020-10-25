@@ -54,7 +54,8 @@ set(TEST_SRC
     tests/linked_list.cpp
     tests/static_array.cpp
     tests/double_linked_list.cpp
-    tests/dynamic_array.cpp)
+    tests/dynamic_array.cpp
+    tests/balanced_binary_tree.cpp)
 add_executable(tests ${TEST_SRC})
 target_link_libraries(tests gtest_main)
 target_include_directories(tests PUBLIC include)
