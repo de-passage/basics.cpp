@@ -14,7 +14,14 @@ template <class Type> class BalancedBinaryTree {
 public:
   constexpr BalancedBinaryTree();
   constexpr BalancedBinaryTree(const std::initializer_list<Type> &);
+
+  BalancedBinaryTree(const BalancedBinaryTree &bbt);
+  BalancedBinaryTree(BalancedBinaryTree &&bbt) noexcept;
+
   ~BalancedBinaryTree();
+
+  BalancedBinaryTree &operator=(const BalancedBinaryTree &);
+  BalancedBinaryTree &operator=(BalancedBinaryTree &&) noexcept;
 
   void insert(const Type &);
 
@@ -71,10 +78,25 @@ template <class Type>
 constexpr BalancedBinaryTree<Type>::BalancedBinaryTree(
     const std::initializer_list<Type> &list)
     : _root(nullptr), _size(0) {
-  for (auto it = list.begin(); it != list.end(); ++it) {
-    insert(*it);
+  for (const auto &v : list) {
+    insert(v);
   }
 }
+
+template <class Type>
+BalancedBinaryTree<Type>::BalancedBinaryTree(
+    const BalancedBinaryTree<Type> &bbt)
+    : _root(nullptr), _size(0) {
+  for (const auto &v : bbt) {
+    insert(v);
+  }
+}
+
+template <class Type>
+BalancedBinaryTree<Type>::BalancedBinaryTree(
+    BalancedBinaryTree<Type> &&bbt) noexcept
+    : _root(std::exchange(bbt._root, nullptr)),
+      _size(std::exchange(bbt._size, 0)) {}
 
 template <class Type> void BalancedBinaryTree<Type>::insert(const Type &value) {
   if (_root) {
@@ -235,7 +257,7 @@ void BalancedBinaryTree<
 
   if (_path.size() == 0)
     return;
-  Node *front = nullptr;
+  Node *front = path.first();
 
   while (_path.size() != 0 &&
          (_path.first()->rhv != front ||
@@ -252,7 +274,7 @@ void BalancedBinaryTree<
 
   if (_path.size() == 0)
     return;
-  Node *front = nullptr;
+  Node *front = _path.first();
 
   while (_path.size() != 0 &&
          (_path.first()->lhv != front ||

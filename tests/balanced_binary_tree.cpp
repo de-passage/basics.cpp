@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <stdexcept>
 
 #include "balanced_binary_tree.hpp"
 #include "utility.hpp"
@@ -23,4 +24,28 @@ TEST(BalancedBinaryTree, ListCtor) {
     ASSERT_EQ(r++, v);
   }
   ASSERT_EQ(r, 8);
+}
+
+TEST(BalancedBinaryTree, CpyCtor) {
+  BBT b = {1, 2, 3, 4};
+  BBT b2 = b;
+  ASSERT_EQ(b.size(), 4_z);
+  ASSERT_EQ(b2.size(), 4_z);
+  int r = 1;
+  for (auto it = b.begin(), it2 = b2.begin(); it != b.end(); ++it, ++it2) {
+    ASSERT_EQ(*it, r);
+    ASSERT_EQ(*it2, r);
+    r++;
+  }
+}
+
+TEST(BalancedBinaryTree, MoveCtor) {
+  BBT b = {1, 2, 3, 4, 5};
+  BBT b2 = std::move(b);
+  ASSERT_EQ(b.size(), 0_z);
+  ASSERT_EQ(b2.size(), 5_z);
+  for (int r = 1; r <= 5; ++r) {
+    ASSERT_NO_THROW(b2[r]);
+    ASSERT_THROW(b[r], std::out_of_range);
+  }
 }
