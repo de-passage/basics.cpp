@@ -40,9 +40,9 @@ public:
     iterator(SingleLinkedList<Node *> &&);
 
     iterator &operator++();
-    iterator &operator++(int);
+    iterator operator++(int);
     iterator &operator--();
-    iterator &operator--(int);
+    iterator operator--(int);
 
     const Type &operator*() const;
     const Type *operator->() const;
@@ -97,6 +97,33 @@ BalancedBinaryTree<Type>::BalancedBinaryTree(
     BalancedBinaryTree<Type> &&bbt) noexcept
     : _root(std::exchange(bbt._root, nullptr)),
       _size(std::exchange(bbt._size, 0)) {}
+
+template <class Type>
+BalancedBinaryTree<Type> &
+BalancedBinaryTree<Type>::operator=(BalancedBinaryTree<Type> &&v) noexcept {
+  std::swap(v._root, _root);
+  _size = std::exchange(v._size, 0);
+  delete v._root;
+  v._root = nullptr;
+  return *this;
+}
+
+template <class Type>
+BalancedBinaryTree<Type> &
+BalancedBinaryTree<Type>::operator=(const BalancedBinaryTree<Type> &v) {
+  Node *r = nullptr;
+  if (v.size() > 0) {
+    auto it = v.begin();
+    r = new Node{*it++};
+    for (; it != v.end(); ++it) {
+      r->insert(*it);
+    }
+  }
+  std::swap(r, _root);
+  delete r;
+  _size = v.size();
+  return *this;
+}
 
 template <class Type> void BalancedBinaryTree<Type>::insert(const Type &value) {
   if (_root) {
@@ -163,7 +190,7 @@ BalancedBinaryTree<Type>::iterator::operator++() {
 }
 
 template <class Type>
-typename BalancedBinaryTree<Type>::iterator &
+typename BalancedBinaryTree<Type>::iterator
 BalancedBinaryTree<Type>::iterator::operator++(int) {
   iterator it = *this;
   ++*this;
@@ -191,7 +218,7 @@ BalancedBinaryTree<Type>::iterator::operator--() {
   return *this;
 }
 template <class Type>
-typename BalancedBinaryTree<Type>::iterator &
+typename BalancedBinaryTree<Type>::iterator
 BalancedBinaryTree<Type>::iterator::operator--(int) {
   iterator it = *this;
   --*this;
